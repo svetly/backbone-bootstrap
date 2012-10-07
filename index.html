@@ -67,22 +67,16 @@
 		var TodoListView = Backbone.View.extend({
 			render: function(){
 				this.collection.forEach(this.addOne, this);
+				return this.$el;
 			},
 			addOne: function(todoItem){
 				var todoView = new TodoView({model: todoItem});
-				this.$el.append(todoView.render().el);
+				this.$el.append(todoView.render());
 			}
 		});
 		
-		
-		
 		var todoListView = new TodoListView({collection: todoList});
-		todoListView.render();
-		console.log(todoListView.el);	
-		
-		
-
-
+		todoListView.render().appendTo('body');
 	});	
 	</script>
   <div class="navbar navbar-inverse">
