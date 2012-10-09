@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backbone Sandbox</title>	
+    <title>Backbone Bootstrap</title>
 		<link href="./css/bootstrap.css" rel="stylesheet">    
     <link href="./css/bootstrap-responsive.css" rel="stylesheet">
 		<link href="./css/style.css" rel="stylesheet">
@@ -25,59 +25,88 @@
 		
 		window.App = {};
 		
-		//Model
-		var TodoItem = Backbone.Model.extend({
+		//MODEL
+		TodoItem = App.TodoItem = Backbone.Model.extend({
+			toggleStatus: function(){
+				if(this.get('status') === 'incomplete'){
+					this.set({'status': 'complete'});
+				}else{
+					this.set({'status': 'incomplete'});
+				}
+				this.save();
+			}		
 		});
-		
 		//MODEL INSTANCE
-		var todoItem = new TodoItem();
+		todoItem = App.todoItem = new TodoItem();
 		
 		//COLLECTION
-		var TodoList = Backbone.Collection.extend({
+		TodoList = App.TodoList = Backbone.Collection.extend({
 			//url: '/todos'
-			model: TodoItem
+			model: TodoItem,
+			initialize: function(){
+				this.on('remove', this.hideModel);
+			},
+			hideModel: function(model){
+				model.trigger('hide');
+			}
 		});
-		
-		var todoList = new TodoList(); //manages a set of models
-		
-		App.todoList = todoList;
-			
+
+		//COLLECTION INSTANCE
+		var todoList = App.todoList = new TodoList();
+
 		todoList.reset([
-			{ description: 'Pick up milk', status: 'incomplete'},
-			{ description: 'Learn backbonejs', status: 'complete'},
-			{ description: 'Get into coffee', status: 'incomplete'},
-			{ description: 'Make money', status: 'incomplete'},
+			{ description: 'Learn Backbone.js', status: 'complete'},
+			{ description: 'Get into CoffeeScript', status: 'incomplete'},
+			{ description: 'Build an App', status: 'incomplete'},
 		]);
+
+		todoList.forEach(function(todoItem){
+			console.log(todoItem.get('description'));
+		});	
 		
-		
-		//View Model
-		var TodoView = Backbone.View.extend({			
-			
-			//template: _.template($("#todoTemplate").html()),
-			template: _.template('<h3><%= description %></h3>'),
-			
+		//VIEW
+		var TodoView = App.TodoView = Backbone.View.extend({			
+			id: 'todo-view',
+			template: _.template($("#todoTemplate").html()),			
 			render: function(){
-				//var html = '<h3>' + this.model.get('description') + '</h3>';
 				this.$el.html(this.template(this.model.toJSON()));
 				return this.$el;
+			},
+			events: {'change input': 'toggleStatus'},
+			toggleStatus: function(){
+				this.model.toggleStatus();
+				this.render();
+			},
+			initialize: function(){
+				this.model.on('change', this.render, this);
+				this.model.on('destroy', this.remove, this);
 			}						
 		});
 
 		//COLLECTION VIEW
-		var TodoListView = Backbone.View.extend({
-			render: function(){
-				this.collection.forEach(this.addOne, this);
-				return this.$el;
+		var TodoListView = App.TodoListView = Backbone.View.extend({
+			initialize: function(){
+				this.collection.on('add', this.addOne, this);
+				this.collection.on('reset', this.addAll, this);
 			},
 			addOne: function(todoItem){
-				var todoView = new TodoView({model: todoItem});
+				var todoView = App.todoView = new TodoView({model: todoItem});
 				this.$el.append(todoView.render());
-			}
+			},
+			render: function(){
+				this.addAll();
+				return this.$el;
+			},
+			addAll: function(){
+				this.collection.forEach(this.addOne, this);
+				return this.$el;
+			},		
 		});
-		
-		var todoListView = new TodoListView({collection: todoList});
-		todoListView.render().appendTo('body');
+
+		var todoListView = App.todoListView = new TodoListView({collection: todoList});
+		todoListView.render().appendTo('body');	
 	});	
+
 	</script>
   <div class="navbar navbar-inverse">
 	  <div class="navbar-inner">
@@ -99,8 +128,7 @@
 					<form class="navbar-search pull-left">
 					  <input type="text" class="search-query" placeholder="Search">
 					</form>
-	      </div>
-
+				</div>
 	    </div>
 	  </div>
 	</div>
