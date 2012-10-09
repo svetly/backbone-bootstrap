@@ -1,2 +1,2 @@
-backbone_sandbox
+backbone-bootstrap
 ================
